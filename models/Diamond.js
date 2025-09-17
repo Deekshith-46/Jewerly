@@ -15,6 +15,6 @@ const diamondSchema = new mongoose.Schema({
   available: { type: Boolean, default: true }
 }, { timestamps: true });
 
-diamondSchema.index({ sku: 1 });
+diamondSchema.index({ sku: 1, shape: 1, carat: 1, price: 1, color: 1 });
 
 module.exports = mongoose.model('Diamond', diamondSchema);

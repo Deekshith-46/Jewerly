@@ -1,7 +1,7 @@
-// server.js
 require('dotenv').config();
 require('./models/Category');
 const express = require('express');
+const app = express();
 const helmet = require('helmet');
 const cors = require('cors');
 const morgan = require('morgan');
@@ -9,16 +9,10 @@ const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
 
-const authRoutes = require('./routes/auth');
-const productRoutes = require('./routes/products');
-const diamondRoutes = require('./routes/diamonds');
-const orderRoutes = require('./routes/orders');
-const userRoutes = require('./routes/users');
-
-const app = express();
+// Connect DB
 connectDB();
 
-// middleware
+// --- middleware (must come before routes) ---
 app.use(helmet());
 app.use(cors());
 app.use(express.json({ limit: '10mb' })); // parse json
@@ -33,12 +27,24 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// routes
+// --- routes ---
+const authRoutes = require('./routes/auth');
+const productRoutes = require('./routes/products');
+const diamondRoutes = require('./routes/diamonds');
+const orderRoutes = require('./routes/orders');
+const userRoutes = require('./routes/users');
+
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/diamonds', diamondRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/users', userRoutes);
+
+// Mount extra routes (AFTER middleware)
+app.use('/api/coupons', require('./routes/couponRoutes'));
+app.use('/api/users/wishlist', require('./routes/wishlistRoutes'));
+app.use('/api/users/addresses', require('./routes/addressRoutes'));
+app.use('/api/contact', require('./routes/contactRoutes'));
 
 // error handler
 app.use(errorHandler);

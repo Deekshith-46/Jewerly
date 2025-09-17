@@ -1,5 +1,6 @@
 // controllers/diamondController.js
 const Diamond = require('../models/Diamond');
+const Product = require('../models/Product');
 
 exports.createDiamond = async (req, res, next) => {
   try {
@@ -46,4 +47,35 @@ exports.deleteDiamond = async (req, res, next) => {
     await Diamond.findByIdAndDelete(req.params.id);
     res.json({ message: 'Deleted' });
   } catch (err) { next(err); }
+};
+
+// Match diamonds with a product setting (by availableShapes + maxPrice)
+exports.matchDiamonds = async (req, res, next) => {
+  try {
+    const { settingId, maxPrice } = req.query;
+
+    if (!settingId) {
+      return res.status(400).json({ message: "settingId is required" });
+    }
+
+    // Load product/setting to get allowed shapes
+    const product = await Product.findById(settingId);
+    if (!product) {
+      return res.status(404).json({ message: "Product/setting not found" });
+    }
+
+    const filter = {
+      shape: { $in: product.availableShapes }, // match allowed shapes
+      available: true
+    };
+
+    if (maxPrice) {
+      filter.price = { $lte: Number(maxPrice) };
+    }
+
+    const diamonds = await Diamond.find(filter).limit(100);
+    res.json(diamonds);
+  } catch (err) {
+    next(err);
+  }
 };
